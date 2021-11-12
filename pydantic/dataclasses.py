@@ -60,8 +60,6 @@ def _validate_dataclass(cls: Type['DataclassT'], v: Any) -> 'DataclassT':
     # But to validate fields `cls` will be in fact a `pydantic.dataclasses.dataclass`,
     # which inherits directly from the class of `v`.
     elif is_builtin_dataclass(v) and isinstance(v, cls.__bases__[0]):
-        import dataclasses
-
         if cls.__bases__[0] == type(v):
             return cls(**_dataclass_as_shallow_dict(v))
         else:
@@ -165,7 +163,7 @@ def _process_class(
 
         mro_annotations = {}
         for c in reversed(_cls.mro()):
-            mro_annotations = dict(mro_annotations, **getattr(c, "__annotations__", {}))
+            mro_annotations = dict(mro_annotations, **getattr(c, '__annotations__', {}))
 
         _cls = type(
             # for pretty output new class will have the name as original
