@@ -9,33 +9,33 @@ on:
   pull_request: {}
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  # lint:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: set up python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+  #     - name: set up python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
 
-      - name: install
-        run: |
-          make install-linting
-          pip freeze
+  #     - name: install
+  #       run: |
+  #         make install-linting
+  #         pip freeze
 
-      - name: lint
-        run: make lint
+  #     - name: lint
+  #       run: make lint
 
-      - name: mypy
-        run: make mypy
+  #     - name: mypy
+  #       run: make mypy
 
-      - name: make history
-        run: python3 ./changes/make_history.py
+  #     - name: make history
+  #       run: python3 ./changes/make_history.py
 
-      - name: check dist
-        run: make check-dist
+  #     - name: check dist
+  #       run: make check-dist
 
   docs-build:
     runs-on: ubuntu-latest
@@ -194,22 +194,22 @@ jobs:
           name: coverage-html
           path: htmlcov
 
-  test-fastapi:
-    name: test fastAPI
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
+  # test-fastapi:
+  #   name: test fastAPI
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
 
-    - name: set up python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.7'
+  #   - name: set up python
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: '3.7'
 
-    - name: install
-      run: make install-testing
+  #   - name: install
+  #     run: make install-testing
 
-    - name: test
-      run: make test-fastapi
+  #   - name: test
+  #     run: make test-fastapi
 
   benchmark:
     name: run benchmarks
@@ -236,7 +236,7 @@ jobs:
 
   build:
     name: build py3.${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
-    needs: [lint, test-linux, test-windows-mac, test-fastapi, benchmark]
+    needs: [test-linux, test-windows-mac, benchmark] # lint, test-fastapi removed
     if: "success() && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')"
     strategy:
       fail-fast: false
