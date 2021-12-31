@@ -9,33 +9,33 @@ on:
   pull_request: {}
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  # lint:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: set up python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+  #     - name: set up python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
 
-      - name: install
-        run: |
-          make install-linting
-          pip freeze
+  #     - name: install
+  #       run: |
+  #         make install-linting
+  #         pip freeze
 
-      - name: lint
-        run: make lint
+  #     - name: lint
+  #       run: make lint
 
-      - name: mypy
-        run: make mypy
+  #     - name: mypy
+  #       run: make mypy
 
-      - name: make history
-        run: python3 ./changes/make_history.py
+  #     - name: make history
+  #       run: python3 ./changes/make_history.py
 
-      - name: check dist
-        run: make check-dist
+  #     - name: check dist
+  #       run: make check-dist
 
   docs-build:
     runs-on: ubuntu-latest
@@ -164,93 +164,93 @@ jobs:
         name: coverage
         path: coverage
 
-  test-old-mypy:
-    name: test mypy v${{ matrix.mypy-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        mypy-version: ['0.910', '0.920', '0.921']
+#  test-old-mypy:
+#    name: test mypy v${{ matrix.mypy-version }}
+#    runs-on: ubuntu-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        mypy-version: ['0.910', '0.920', '0.921']
+#
+#    steps:
+#    - uses: actions/checkout@v2d4e31aa2a43e538355511587d6f9546b9d7e9802
+#
+#    - name: set up python
+#      uses: actions/setup-python@v2
+#      with:
+#        python-version: '3.10'
+#
+#    - name: install
+#      run: |
+#        make install-testing
+#        pip freeze
+#
+#    - name: uninstall deps
+#      run: pip uninstall -y mypy tomli toml
+#
+#    - name: install specific mypy version
+#      run: pip install mypy==${{ matrix.mypy-version }}
+#
+#    - run: mkdir coverage
+#
+#    - name: run tests
+#      run: pytest --cov=pydantic tests/mypy
+#      env:
+#        COVERAGE_FILE: coverage/.coverage.linux-py3.10-mypy${{ matrix.mypy-version }}
+#        CONTEXT: linux-py3.10-mypy${{ matrix.mypy-version }}
+#
+#    - name: store coverage files
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: coverage
+#        path: coverage
 
-    steps:
-    - uses: actions/checkout@v2
+#  coverage-combine:
+#    needs: [test-linux, test-windows-mac, test-old-mypy]
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - uses: actions/setup-python@v1
+#        with:
+#          python-version: '3.8'
+#
+#      - name: get coverage files
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: coverage
+#          path: coverage
+#
+#      - run: pip install coverage
+#
+#      - run: ls -la
+#      - run: coverage combine coverage
+#      - run: coverage report
+#      - run: coverage html --show-contexts
+#
+#      - name: Store coverage html
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: coverage-html
+#          path: htmlcov
 
-    - name: set up python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
+  # test-fastapi:
+  #   name: test fastAPI
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
 
-    - name: install
-      run: |
-        make install-testing
-        pip freeze
+  #   - name: set up python
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: '3.7'
 
-    - name: uninstall deps
-      run: pip uninstall -y mypy tomli toml
+  #   - name: install
+  #     run: make install-testing
 
-    - name: install specific mypy version
-      run: pip install mypy==${{ matrix.mypy-version }}
-
-    - run: mkdir coverage
-
-    - name: run tests
-      run: pytest --cov=pydantic tests/mypy
-      env:
-        COVERAGE_FILE: coverage/.coverage.linux-py3.10-mypy${{ matrix.mypy-version }}
-        CONTEXT: linux-py3.10-mypy${{ matrix.mypy-version }}
-
-    - name: store coverage files
-      uses: actions/upload-artifact@v2
-      with:
-        name: coverage
-        path: coverage
-
-  coverage-combine:
-    needs: [test-linux, test-windows-mac, test-old-mypy]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v1
-        with:
-          python-version: '3.8'
-
-      - name: get coverage files
-        uses: actions/download-artifact@v2
-        with:
-          name: coverage
-          path: coverage
-
-      - run: pip install coverage
-
-      - run: ls -la
-      - run: coverage combine coverage
-      - run: coverage report
-      - run: coverage html --show-contexts
-
-      - name: Store coverage html
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage-html
-          path: htmlcov
-
-  test-fastapi:
-    name: test fastAPI
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: set up python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.7'
-
-    - name: install
-      run: make install-testing
-
-    - name: test
-      run: make test-fastapi
+  #   - name: test
+  #     run: make test-fastapi
 
   benchmark:
     name: run benchmarks
@@ -277,7 +277,7 @@ jobs:
 
   build:
     name: build py3.${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
-    needs: [lint, test-linux, test-windows-mac, test-old-mypy, test-fastapi, benchmark]
+    needs: [test-linux, test-windows-mac, benchmark] # lint, test-fastapi, test-old-mypy removed
     if: "success() && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')"
     strategy:
       fail-fast: false
@@ -336,52 +336,52 @@ jobs:
         name: pypi_files
         path: dist
 
-  deploy:
-    name: Deploy
-    needs: build
-    if: "success() && startsWith(github.ref, 'refs/tags/')"
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: set up python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-
-      - name: get dist artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: pypi_files
-          path: dist
-
-      - name: get docs
-        uses: actions/download-artifact@v2
-        with:
-          name: docs
-          path: site
-
-      - name: install
-        run: |
-          make install-docs
-          pip install -U twine
-
-      - name: twine check
-        run: |
-          twine check dist/*
-          ls -lh dist
-
-      - name: check tag
-        run: ./tests/check_tag.py
-
-      - name: upload to pypi
-        run: twine upload dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_token }}
-
-      - name: publish docs
-        run: make publish-docs
-        env:
-          NETLIFY: ${{ secrets.netlify_token }}
+#  deploy:
+#    name: Deploy
+#    needs: build
+#    if: "success() && startsWith(github.ref, 'refs/tags/')"
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: set up python
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: '3.8'
+#
+#      - name: get dist artifacts
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: pypi_files
+#          path: dist
+#
+#      - name: get docs
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: docs
+#          path: site
+#
+#      - name: install
+#        run: |
+#          make install-docs
+#          pip install -U twine
+#
+#      - name: twine check
+#        run: |
+#          twine check dist/*
+#          ls -lh dist
+#
+#      - name: check tag
+#        run: ./tests/check_tag.py
+#
+#      - name: upload to pypi
+#        run: twine upload dist/*
+#        env:
+#          TWINE_USERNAME: __token__
+#          TWINE_PASSWORD: ${{ secrets.pypi_token }}
+#
+#      - name: publish docs
+#        run: make publish-docs
+#        env:
+#          NETLIFY: ${{ secrets.netlify_token }}

@@ -1,3 +1,4 @@
+import dataclasses
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type, TypeVar, Union, overload
 
 from .class_validators import gather_all_validators
@@ -37,7 +38,18 @@ if TYPE_CHECKING:
             pass
 
 
-def _validate_dataclass(cls: Type['DataclassT'], v: Any) -> 'DataclassT':
+def _dataclass_as_shallow_dict(data_class: object) -> Dict[str, Any]:
+    """
+    Creates a shallow copy of a dataclass.
+
+    If the dataclass contains an attribute which is of type dataclass, then calling `dataclasses.asdict` recursively
+    serialises the object to JSON. This causes problems when the type associated with the datatype is an abstract class
+    since it cannot be instantiated.
+    """
+    return dict([(f.name, getattr(data_class, f.name)) for f in dataclasses.fields(data_class) if f.init])
+
+
+def _validate_dataclass(cls: Type['DataclassT'], v: Any) -> object:
     if isinstance(v, cls):
         return v
     elif isinstance(v, (list, tuple)):
@@ -47,10 +59,16 @@ def _validate_dataclass(cls: Type['DataclassT'], v: Any) -> 'DataclassT':
     # In nested dataclasses, v can be of type `dataclasses.dataclass`.
     # But to validate fields `cls` will be in fact a `pydantic.dataclasses.dataclass`,
     # which inherits directly from the class of `v`.
-    elif is_builtin_dataclass(v) and cls.__bases__[0] is type(v):
-        import dataclasses
-
-        return cls(**dataclasses.asdict(v))
+    elif is_builtin_dataclass(v) and isinstance(v, cls.__bases__[0]):
+        if cls.__bases__[0] == type(v):
+            return cls(**_dataclass_as_shallow_dict(v))
+        else:
+            # `v` is an instance of a *subclass* of `cls`, `subcls`.
+            # We don't have a definitive constructor for the pydantic.dataclasses.dataclass associated with `subcls`
+            # so we (unfortunately) have to create a new constructor for each instance we come across.
+            # We copy the configuration to ensure consistent behaviour with `cls`.
+            pydantic_dataclass_constructor = dataclass(v.__class__, config=cls.__pydantic_model__.Config)
+            return pydantic_dataclass_constructor(**_dataclass_as_shallow_dict(v))
     else:
         raise DataclassTypeError(class_name=cls.__name__)
 
@@ -141,18 +159,31 @@ def _process_class(
     # https://github.com/samuelcolvin/pydantic/issues/2111
     if is_builtin_dataclass(_cls):
         uniq_class_name = f'_Pydantic_{_cls.__name__}_{id(_cls)}'
+        existing_dataclass_fields = dataclasses.fields(_cls)
+
+        mro_annotations: Dict[str, Any] = {}
+        for c in reversed(_cls.mro()):
+            mro_annotations = dict(mro_annotations, **getattr(c, '__annotations__', {}))
+
         _cls = type(
             # for pretty output new class will have the name as original
             _cls.__name__,
             (_cls,),
             {
-                '__annotations__': resolve_annotations(_cls.__annotations__, _cls.__module__),
+                '__annotations__': resolve_annotations(mro_annotations, _cls.__module__),
                 '__post_init__': _pydantic_post_init,
                 # attrs for pickle to find this class
                 '__module__': __name__,
                 '__qualname__': uniq_class_name,
             },
         )
+
+        for f in existing_dataclass_fields:
+            # For some reason, this ensures that `delattr` works correctly on these fields.
+            # This is necessary to support the underlying `dataclasses.dataclass` functionality when a
+            # field with `factory_default` follows a field a previously defined default field.
+            setattr(_cls, f.name, f)
+
         globals()[uniq_class_name] = _cls
     else:
         _cls.__post_init__ = _pydantic_post_init

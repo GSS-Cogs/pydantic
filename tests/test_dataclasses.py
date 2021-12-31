@@ -1,5 +1,6 @@
 import dataclasses
 import pickle
+from abc import ABC, abstractmethod
 from collections.abc import Hashable
 from datetime import datetime
 from pathlib import Path
@@ -776,6 +777,113 @@ def test_inherit_builtin_dataclass():
     assert pika.x == 2
     assert pika.y == 4
     assert pika.z == 3
+
+
+def test_inherit_builtin_dataclass_nested():
+    @dataclasses.dataclass
+    class A:
+        a: int
+
+    @dataclasses.dataclass
+    class B(A):
+        b: int
+
+    @pydantic.dataclasses.dataclass
+    class Z:
+        za: A
+
+    b = B(0, 1)
+    z = Z(b)
+    assert z.za.a == 0
+    assert z.za.b == 1
+
+
+def test_inherit_builtin_dataclass_nested_abstract():
+    """
+    Ensures the following exception is not raised:
+    `Can't instantiate abstract class A with abstract method do_something (type=type_error)`
+    """
+
+    @dataclasses.dataclass
+    class A(ABC):
+        a: int
+
+        @abstractmethod
+        def do_something(self) -> str:
+            pass
+
+    @dataclasses.dataclass
+    class B(A):
+        b: int
+
+        def do_something(self) -> str:
+            return 'hi'
+
+    @dataclasses.dataclass
+    class X:
+        xa: A
+
+    @pydantic.dataclasses.dataclass
+    class Z:
+        zx: X
+
+    b = B(0, 1)
+    x = X(b)
+    z = Z(x)
+    assert z.zx.xa.a == 0
+    assert z.zx.xa.b == 1
+
+
+def test_wrapping_existing_data_classes_with_default_factory_fields():
+    """
+    Checking that the following exception is not raised:
+        > TypeError: non-default argument 'b_1' follows default argument
+        > in '3.9/lib/python3.9/dataclasses.py:504'
+    """
+
+    @dataclasses.dataclass
+    class A:
+        a_1: int
+        mro_override_test_prop: str
+
+    @dataclasses.dataclass
+    class B(A):
+        mro_override_test_prop: bool
+        b_2: Optional[str] = dataclasses.field(default=None)
+        b_1: List[str] = dataclasses.field(default_factory=list)
+
+    B_Pydantic = pydantic.dataclasses.dataclass(B)
+
+    b_p = B_Pydantic(a_1=0, mro_override_test_prop=False)
+    assert b_p.a_1 == 0
+    assert type(b_p.mro_override_test_prop) == bool
+
+
+def test_nested_dataclass_non_init_attributes():
+    """
+    When a dataclass instance is converted from a built-in type to the pydantic type, test that it correctly avoids
+    attempting to copy fields which have `init=False` set.
+    """
+
+    @dataclasses.dataclass
+    class A:
+        a_1: int
+        a_non_init: str = dataclasses.field(init=False)
+
+        def __post_init__(self):
+            self.a_non_init = 'Hello, world.'
+
+    @dataclasses.dataclass
+    class B:
+        a: A
+
+    B_Pydantic = pydantic.dataclasses.dataclass(B)
+
+    a = A(0)
+    a.a_non_init = 'Goodbye, world.'
+    b_p = B_Pydantic(a=a)
+    assert b_p.a.a_1 == 0
+    assert b_p.a.a_non_init == 'Hello, world.'
 
 
 def test_dataclass_arbitrary():
