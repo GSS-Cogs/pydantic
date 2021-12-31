@@ -92,7 +92,7 @@ if not any(arg in sys.argv for arg in ['clean', 'check']) and 'SKIP_CYTHON' not 
         )
 
 setup(
-    name='pydantic',
+    name='csvcubed-pydantic',
     version=str(version.VERSION),
     description=description,
     long_description=long_description,
